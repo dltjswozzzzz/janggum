@@ -14,6 +14,7 @@ def main(request):
     #레시피 검색 시 context 넘겨주기 위한 작업
     posts = Post.objects.all()
     if request.method == "POST":
+        # Review : Python은 CamelCase가 아닌 snake_head가 공식 권장안.
         ingredientList = request.POST.getlist("search")
         print(ingredientList)
         #각각 검색재료에 대해 필터링
@@ -25,7 +26,10 @@ def main(request):
         if posts:
             #재료를 파이썬 리스트화해야 전체 레시피 보기에서 재료도 보이게 할 수 있음
             ingredientLists = []
+            # Review : 추론 가능한 변수명 권장 - ingredientList vs ingredientLists
             for post in posts:
+                # Review : 2:-3 인덱싱의 이유가 코드에 드러나있지 않음
+                # Review: 입력 형태가 바뀌면?
                 ingredientStr = post.ingredient[2:-3].replace("'", '')
                 ingredientList = ingredientStr.split(',')
                 #약간 야매인 거 같긴한데 새로운 field만들어서 파이썬 리스트 추가
@@ -48,7 +52,7 @@ def signup(request):
         #form이 유효한 경우
         if form.is_valid():
             user = form.save()
-            auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')   
+            auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return render(request, template_name="posts/success.html")
         #유효하지 않은 경우 redirect
         else:
@@ -88,7 +92,7 @@ def logout(request):
     auth.logout(request)
     return redirect('posts:main')
 
-# all_recipe_list페이지 
+# all_recipe_list페이지
 def posts_all_list(request:HttpRequest, *args, **kwargs):
     posts = Post.objects.all()
     comments = Comment.objects.all()
@@ -96,14 +100,14 @@ def posts_all_list(request:HttpRequest, *args, **kwargs):
     # text = request.GET.get("text")
     # if text:
     #     posts = posts.filter(content__contains=text)
-    
+
     #데이터 전처리 => 재료가 textfield로 저장되어있으므로 각 재료를 창에 띄울 수 있도록 리스트화
     for post in posts:
                 ingredientStr = post.ingredient[2:-3].replace("'", '')
                 ingredientList = ingredientStr.split(',')
                 #새 필드 만들어서 html에 데이터 보냄
                 post.ingredientList = ingredientList
-                post.save()   
+                post.save()
     context = {
         "posts" : posts,
         'comments' : comments,
@@ -113,7 +117,7 @@ def posts_all_list(request:HttpRequest, *args, **kwargs):
 # recipe search page 선택값으로 찾는거 구현 안함
 # def posts_search_list(request:HttpRequest, *args, **kwargs):
 #     posts = Post.objects.all()
-   
+
 #     context = {
 #         "posts" : posts,
 #     }
@@ -139,7 +143,9 @@ def create(request:HttpRequest, *args, **kwargs):
         #여러 재료 input들 한꺼번에 가져와 저장
         ingredients = request.POST.getlist('ingredient[]'),
         print(ingredients)
+        # Review: 추론 가능한 변수명 필요 - ingredients vs ingredientList
         ingredientList = ingredients[0]
+        # Review: ele가 뭔지 알 수 없다. 추론가능한 변수명 필요
         for ele in ingredientList:
             all_used_ingredient_set.add(ele)
         Post.objects.create(
@@ -154,7 +160,7 @@ def create(request:HttpRequest, *args, **kwargs):
 
 # update
 def posts_update(request:HttpRequest, pk, *args, **kwargs):
-    
+
     post = Post.objects.get(id=pk)
     #재료가 각각 표시되게끔 전처리
     ingredientStr = post.ingredient[2:-3].replace("'", '')
@@ -167,7 +173,7 @@ def posts_update(request:HttpRequest, pk, *args, **kwargs):
         post.content=request.POST["content"]
         post.ingredient = request.POST.getlist('ingredient[]'),
         post.save()
-        
+
 
         for ele in post.ingredient[0]:
             all_used_ingredient_set.add(ele)
@@ -178,7 +184,7 @@ def posts_update(request:HttpRequest, pk, *args, **kwargs):
     }
     return render(request, "posts/recipe_update_page.html", context=context)
 
-# delete 
+# delete
 def posts_delete(request:HttpRequest, pk, *args, **kwargs):
     if request.method == "POST":
         post = Post.objects.get(id=pk)
@@ -187,7 +193,7 @@ def posts_delete(request:HttpRequest, pk, *args, **kwargs):
 
 def posts_retrieve(request:HttpRequest, pk, *args, **kwargs):
     post = Post.objects.all().get(id=pk)
-    
+
     #데이터 전처리 string -> list
     ingredientStr = post.ingredient[2:-3].replace("'", '')
     ingredientList = ingredientStr.split(',')
@@ -213,22 +219,22 @@ def like_ajax(request, *args, **kwargs):
         like = Like.objects.filter(post_id=post, user_id=user)
         like_true = True
 
-        if like.exists(): 
+        if like.exists():
             like.delete()
             post.number -= 1
             post.save()
             like_true = False
             return JsonResponse({'like_true': like_true, 'number': post.number})
-        
+
         Like.objects.create(
             post_id = post,
             user_id = user,
             like_value = True,
-            
+
         )
         post.number += 1
         post.save()
-            
+
 
     return JsonResponse({'like_true': like_true, 'number': post.number})
 
@@ -268,5 +274,3 @@ def comment_del_ajax(request, *args, **kwargs):
     comment = Comment.objects.get(id=comment_id)
     comment.delete()
     return JsonResponse({'post_id': post_id, 'comment_id': comment_id})
-
-
