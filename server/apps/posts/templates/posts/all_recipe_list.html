@@ -60,7 +60,7 @@
                                     <div class="recipe_content_bottom">
                                         <div class="like_container">
                                             <button id="yellow_color" class="like_{{post.id}}" onclick="onClickLike({{post.id}})">
-                                                <img class="like_img" src="{% static 'image/복주머니_빨강.png' %}" alt="복주머니"/>
+                                                <img class="like_img" src="{% static 'image/복주머니_흑백.png' %}" alt="복주머니"/>
                                             </button>
                                             <div>
                                                 <span>좋아요 개수: </span>
@@ -96,7 +96,7 @@
                                     <div class="recipe_content_bottom">
                                         <div class="like_container">
                                             <button class="like_{{post.id}}" onclick="onClickLike({{post.id}})">
-                                                <img class="like_img" src="{% static 'image/복주머니_빨강.png' %}" alt="복주머니"/>
+                                                <img class="like_img" src="{% static 'image/복주머니_흑백.png' %}" alt="복주머니"/>
                                             </button>
                                             <div>
                                                 <span>좋아요 개수: </span>
@@ -151,9 +151,10 @@
             <!-- 모달 -->
         </div>
         <script src="http://code.jquery.com/jquery-latest.js"></script>
-        <script>    
+        <script>
             const requestDetail = new XMLHttpRequest();
             const requestLike = new XMLHttpRequest();
+
             const requestComment = new XMLHttpRequest();
             const requestStore = new XMLHttpRequest();
             const onClickStore = (id) => {
@@ -367,8 +368,7 @@
                 }
             }; 
 
-
-            
+            let currentId;
             const onClickLike = (id) => {
                 const url = "/like_ajax/";
                 requestLike.open("POST", url, true);
@@ -377,23 +377,66 @@
                 "application/x-www-form-urlencoded"
                 );
                 requestLike.send(JSON.stringify({ id: id}));
+
+                //id를 전역변수로 선언
+                currentId = id;
+
+                // 좋아요를 누른 포스트 ID를 로컬 스토리지에 저장한다
+                likedPosts.push(id);
+                localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+                // 좋아요 이미지를 업데이트한다
+                const buttonElement = document.querySelector(`.like_${currentId}`);
+                const imgElement = buttonElement.querySelector('.like_img');
+                imgElement.src = "/static/image/복주머니_빨강.png";
             };
-        
+
+            // 좋아요를 누른 포스트 ID를 로컬 스토리지에서 가져온다
+            const likedPosts = JSON.parse(localStorage.getItem('likedPosts')) || [];
+
+            // 모든 좋아요 버튼을 선택한다
+            const likeButtons = document.querySelectorAll('.like_container button');
+
+            // 모든 좋아요 버튼에 대해 반복한다
+            likeButtons.forEach((button) => {
+                {/* const id = button.dataset.id;    */}
+            
+                // 좋아요를 눌렀던 포스트 ID인지 확인한다
+                if (likedPosts.includes(currentId)) {
+                    // 좋아요 이미지를 업데이트한다
+                    {/* const imgElements2 = document.querySelectorAll(`.like_${currentId} .like_img`);
+                    imgElements2.src = "/static/image/복주머니_빨강.png"; */}
+                    const buttonElement = document.querySelector(`.like_${currentId}`);
+                    const imgElement = buttonElement.querySelector('.like_img');
+                    imgElement.src = "/static/image/복주머니_빨강.png";
+                } 
+            });
+            
+
+    
+
             requestLike.onreadystatechange = () => {
                 if (requestLike.readyState === XMLHttpRequest.DONE) {
                 if (requestLike.status < 400) {
                     const { id, like_true, number } = JSON.parse(requestLike.response);
-                    // const element = document.querySelector(`.like_{{post.id}}`);
                     const element = document.querySelectorAll(`.like_dislike_${id}`);
                     console.log(element, "class 오브젝트들", element.length)
+
                     for(i=0; i<element.length; i++){
                         var num = element[i].innerHTML;
                         if (like_true == true){
                             const count = Number(num) + 1;
                             element[i].innerHTML = `${count}`;
+                            {/* const buttonElement = document.querySelector(`.like_${id}`);
+                            const imgElement = buttonElement.querySelector('.like_img');
+                            imgElement.src = "/static/image/복주머니_빨강.png"; */}
+                            
+
                         }else{
                             const count = Number(num) - 1;
                             element[i].innerHTML = `${count}`;
+                            const buttonElement = document.querySelector(`.like_${id}`);
+                            const imgElement = buttonElement.querySelector('.like_img');
+                            imgElement.src = "/static/image/복주머니_흑백.png";
 
                         }
                     }
